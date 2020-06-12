@@ -10,6 +10,7 @@ go get -u github.com/ameenmaali/whoareyou
 
 ## Usage
 
+```
 Usage of ./whoareyou:
   -H string
     	Headers to add in all requests. Multiple should be separated by semi-colon
@@ -37,3 +38,4 @@ Usage of ./whoareyou:
     	Set the concurrency/worker count (default 25)
   -workers int
     	Set the concurrency/worker count (default 25)
+```
