@@ -4,9 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/fatih/color"
 )
@@ -16,7 +16,7 @@ type Task struct {
 }
 
 type MatchResult struct {
-	Url string
+	Url               string
 	TechnologyMatches map[string][]string
 }
 
@@ -28,23 +28,23 @@ var successfulRequestsSent int
 var printGreen = color.New(color.FgGreen).PrintfFunc()
 var printRed = color.New(color.FgRed).FprintfFunc()
 var printCyan = color.New(color.FgCyan).FprintfFunc()
-var startTime = time.Now()
 
 func main() {
+	// Create an empty config object
+	config = NewConfig()
+
+	// Verify flags are properly formatted/expected
 	err := verifyFlags(&opts)
 	if err != nil {
-		fmt.Println(err)
+		printRed(os.Stderr, "error parsing flags: %v\n", err)
 		flag.Usage()
 		os.Exit(1)
 	}
 
+	// Get the URLs provided, deduplicate, and load properly formatted ones into slice
 	urls, err := getUrlsFromFile()
 	if err != nil {
 		fmt.Println("Error getting URLs from stdin: ", err)
-	}
-
-	for _, u := range urls {
-		u += ""
 	}
 
 	// Create HTTP Transport and Client after parsing flags
@@ -62,8 +62,6 @@ func main() {
 	tasks := make(chan Task)
 	var wg sync.WaitGroup
 
-	startTime := time.Now()
-
 	for i := 0; i < opts.Concurrency; i++ {
 		wg.Add(1)
 		go func() {
@@ -80,10 +78,6 @@ func main() {
 
 	close(tasks)
 	wg.Wait()
-
-	secondsElapsed := time.Since(startTime).Seconds()
-	printCyan(os.Stderr, "Evaluations complete! %v successful requests sent (%v failed): %v requests per second\n",
-		successfulRequestsSent, failedRequestsSent, int(float64(successfulRequestsSent)/secondsElapsed))
 }
 
 func (t Task) execute() {
@@ -104,22 +98,23 @@ func (t Task) execute() {
 
 	// Extract relevant data from HTML docs
 	htmlExtractions := HtmlExtractions{
-		ScriptTags: []string{},
+		ScriptTags:       []string{},
 		InlineJavaScript: []string{},
-		MetaTags: map[string]string{},
+		MetaTags:         map[string]string{},
 	}
 	htmlExtractions.getScriptTags(resp.GoQueryDoc)
 	htmlExtractions.getInlineJavaScript(resp.GoQueryDoc)
 	htmlExtractions.getMetaTags(resp.GoQueryDoc)
 
 	techMatches := map[string][]string{}
-	var matchTypes []string
 	matchResult := MatchResult{
-		Url: t.Url,
+		Url:               t.Url,
 		TechnologyMatches: techMatches,
 	}
 
 	for key, value := range config.TechInScope {
+		var matchTypes []string
+
 		if contentMatch := value.Matches.contentMatch(&responseBody); contentMatch {
 			matchTypes = append(matchTypes, "htmlContent")
 			matchResult.TechnologyMatches[key] = matchTypes
@@ -138,6 +133,25 @@ func (t Task) execute() {
 		if jsMatch := value.Matches.javascriptMatch(&htmlExtractions.InlineJavaScript); jsMatch {
 			matchTypes = append(matchTypes, "javascriptContent")
 			matchResult.TechnologyMatches[key] = matchTypes
+		}
+	}
+
+	for key, value := range config.CustomMatch {
+		var matchTypes []string
+		matches := []*regexp.Regexp{value}
+
+		if strings.ToLower(key) == "htmlcontent" {
+			if match := strAndSliceMatch(&responseBody, matches); match {
+				matchTypes = append(matchTypes, "htmlContent")
+				matchResult.TechnologyMatches[key] = matchTypes
+			}
+		}
+
+		if strings.ToLower(key) == "scripttag" {
+			if match := sliceAndSliceMatch(&htmlExtractions.ScriptTags, matches); match {
+				matchTypes = append(matchTypes, "scriptTag")
+				matchResult.TechnologyMatches[key] = matchTypes
+			}
 		}
 	}
 

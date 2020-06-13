@@ -1,11 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 )
 
@@ -16,19 +18,33 @@ type CliOptions struct {
 	Headers        string
 	Debug          bool
 	Concurrency    int
-	SilentMode     bool
 	Timeout        int
 	Version        bool
 	RawTechInScope string
+	CustomMatch    MultiStringFlag
 }
 
 type Config struct {
-	Cookies        string
-	Headers        map[string]string
-	httpClient     *http.Client
-	HasExtraParams bool
-	TechProvided   []string
-	TechInScope    map[string]WappalyzerApp
+	Cookies      string
+	Headers      map[string]string
+	httpClient   *http.Client
+	TechProvided []string
+	CustomMatch  map[string]*regexp.Regexp
+	TechInScope  map[string]WappalyzerApp
+}
+
+type MultiStringFlag []string
+
+func NewConfig() Config {
+	config := Config{
+		Cookies:      "",
+		Headers:      make(map[string]string),
+		httpClient:   nil,
+		TechProvided: []string{},
+		CustomMatch:  make(map[string]*regexp.Regexp),
+		TechInScope:  make(map[string]WappalyzerApp),
+	}
+	return config
 }
 
 func verifyFlags(options *CliOptions) error {
@@ -40,10 +56,10 @@ func verifyFlags(options *CliOptions) error {
 	flag.StringVar(&options.RawTechInScope, "tech", "", "The technology to check against (default is all, comma-separated list). Get names from app keys here: https://github.com/AliasIO/wappalyzer/blob/master/src/apps.json")
 	flag.StringVar(&options.RawTechInScope, "technology-lookups", "", "The technology to check against (default is all, comma-separated list). Get names from app keys here: https://github.com/AliasIO/wappalyzer/blob/master/src/apps.json")
 
-	flag.BoolVar(&options.Debug, "debug", false, "Debug/verbose mode to print more info for failed/malformed URLs or requests")
+	flag.Var(&options.CustomMatch, "m", "Key value pair (JSON formatted) of a match source type and regex value (or string) to search for (i.e. '{\"htmlContent\": \"^http(s)?:\\/\\/.+\"}'. Available match source types are: htmlContent, scriptTag")
+	flag.Var(&options.CustomMatch, "match", "Key value pair (JSON formatted) of a match source type and regex value (or string) to search for (i.e. '{\"htmlContent\": \"^http(s)?:\\/\\/.+\"}'. Available match source types are: htmlContent, scriptTag")
 
-	flag.BoolVar(&options.SilentMode, "s", false, "Only print successful evaluations (i.e. mute status updates). Note these updates print to stderr, and won't be saved if saving stdout to files")
-	flag.BoolVar(&options.SilentMode, "silent", false, "Only print successful evaluations (i.e. mute status updates). Note these updates print to stderr, and won't be saved if saving stdout to files")
+	flag.BoolVar(&options.Debug, "debug", false, "Debug/verbose mode to print more info for failed/malformed URLs or requests")
 
 	flag.IntVar(&options.Concurrency, "w", 25, "Set the concurrency/worker count")
 	flag.IntVar(&options.Concurrency, "workers", 25, "Set the concurrency/worker count")
@@ -95,6 +111,23 @@ func verifyFlags(options *CliOptions) error {
 		config.TechProvided = technology
 	}
 
+	for _, value := range options.CustomMatch {
+		var data map[string]interface{}
+		err := json.Unmarshal([]byte(value), &data)
+		if err != nil {
+			return err
+		}
+
+		for key, value := range data {
+			str := fmt.Sprintf("%v", value)
+			re, err := regexp.Compile(str)
+			if err != nil {
+				return err
+			}
+			config.CustomMatch[key] = re
+		}
+	}
+
 	return nil
 }
 
@@ -113,4 +146,13 @@ func updateTechnologyInScope() {
 			config.TechInScope = data
 		}
 	}
+}
+
+func (m *MultiStringFlag) String() string {
+	return ""
+}
+
+func (m *MultiStringFlag) Set(value string) error {
+	*m = append(*m, value)
+	return nil
 }
