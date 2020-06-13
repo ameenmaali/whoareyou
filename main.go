@@ -18,6 +18,7 @@ type Task struct {
 type MatchResult struct {
 	Url               string
 	TechnologyMatches map[string][]string
+	TechFound []string
 }
 
 var config Config
@@ -28,6 +29,7 @@ var successfulRequestsSent int
 var printGreen = color.New(color.FgGreen).PrintfFunc()
 var printRed = color.New(color.FgRed).FprintfFunc()
 var printCyan = color.New(color.FgCyan).FprintfFunc()
+var printYellow = color.New(color.FgYellow).FprintfFunc()
 
 func main() {
 	// Create an empty config object
@@ -110,6 +112,7 @@ func (t Task) execute() {
 	matchResult := MatchResult{
 		Url:               t.Url,
 		TechnologyMatches: techMatches,
+		TechFound: []string{},
 	}
 
 	for key, value := range config.TechInScope {
@@ -118,21 +121,25 @@ func (t Task) execute() {
 		if contentMatch := value.Matches.contentMatch(&responseBody); contentMatch {
 			matchTypes = append(matchTypes, "htmlContent")
 			matchResult.TechnologyMatches[key] = matchTypes
+			matchResult.TechFound = append(matchResult.TechFound, key)
 		}
 
 		if scriptMatch := value.Matches.scriptMatch(&htmlExtractions.ScriptTags); scriptMatch {
 			matchTypes = append(matchTypes, "scriptTag")
 			matchResult.TechnologyMatches[key] = matchTypes
+			matchResult.TechFound = append(matchResult.TechFound, key)
 		}
 
 		if metaMatch := value.Matches.metaMatch(&htmlExtractions.MetaTags); metaMatch {
 			matchTypes = append(matchTypes, "metaTag")
 			matchResult.TechnologyMatches[key] = matchTypes
+			matchResult.TechFound = append(matchResult.TechFound, key)
 		}
 
 		if jsMatch := value.Matches.javascriptMatch(&htmlExtractions.InlineJavaScript); jsMatch {
 			matchTypes = append(matchTypes, "javascriptContent")
 			matchResult.TechnologyMatches[key] = matchTypes
+			matchResult.TechFound = append(matchResult.TechFound, key)
 		}
 	}
 
@@ -141,22 +148,29 @@ func (t Task) execute() {
 		matches := []*regexp.Regexp{value}
 
 		if strings.ToLower(key) == "htmlcontent" {
+			key = "custom-" + key
 			if match := strAndSliceMatch(&responseBody, matches); match {
 				matchTypes = append(matchTypes, "htmlContent")
 				matchResult.TechnologyMatches[key] = matchTypes
+				matchResult.TechFound = append(matchResult.TechFound, key)
 			}
 		}
 
 		if strings.ToLower(key) == "scripttag" {
+			key = "custom-" + key
 			if match := sliceAndSliceMatch(&htmlExtractions.ScriptTags, matches); match {
 				matchTypes = append(matchTypes, "scriptTag")
 				matchResult.TechnologyMatches[key] = matchTypes
+				matchResult.TechFound = append(matchResult.TechFound, key)
 			}
 		}
 	}
 
-	for tech, matchType := range matchResult.TechnologyMatches {
-		printGreen("[%v] found [%v] running via the following match types: [%v]\n",
-			matchResult.Url, tech, strings.Join(matchType, ", "))
+	if len(matchResult.TechFound) > 0 {
+		printGreen("[%v]: [%v]\n", matchResult.Url, strings.Join(matchResult.TechFound, ", "))
+	} else {
+		if opts.Debug {
+			printYellow(os.Stderr, "[%v]: no matches found\n", matchResult.Url)
+		}
 	}
 }

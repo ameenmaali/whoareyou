@@ -20,6 +20,9 @@ func getUrlsFromFile() ([]string, error) {
 		// Only include properly formatted URLs
 		u, err := url.ParseRequestURI(providedUrl)
 		if err != nil {
+			if opts.Debug {
+				printRed(os.Stderr, "url provided [%v] is not a properly formatted URL\n", providedUrl)
+			}
 			continue
 		}
 
