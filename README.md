@@ -91,10 +91,10 @@ Pass in a site to [waybackurls](https://github.com/tomnomnom/waybackurls), run i
 echo "https://google.com" | waybackurls | urldedupe | whoareyou > results.txt
 ```
 
-Use a custom match to look for URLs in a response body or script tag
+Use a custom match to look for the existence of a URL in a response body or script tag
 
 ```
-cat urls.txt | whoareyou -m '{"findUrls":{"scriptSrc":"^http(s)?:\/\/.+", "responseBody":"^http(s)?:\/\/.+"}}'
+cat urls.txt | whoareyou -m '{"findUrls":{"scriptSrc":"^http(s)?:\/\/mymatch.+", "responseBody":"^http(s)?:\/\/mymatch.+"}}'
 ```
 
 Use a custom match, and don't use Wappalyzer dataset to look for a specific list of strings in a response body
