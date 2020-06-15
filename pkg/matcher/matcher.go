@@ -150,26 +150,3 @@ func mapAndMapMatch(matchMapPtr *map[string]string, values map[string]*regexp.Re
 	}
 	return false
 }
-
-//func EvaluateCustom(tech string, matchRegex *regexp.Regexp, matchResult *MatchResult) {
-//	var matchTypes []string
-//	matches := []*regexp.Regexp{matchRegex}
-//
-//	if strings.ToLower(tech) == "htmlcontent" {
-//		tech = "custom-" + tech
-//		if match := strAndSliceMatch(m.HtmlExtractions.RawHtmlBody, matches); match {
-//			matchTypes = append(matchTypes, "htmlContent")
-//			matchResult.TechnologyMatches[tech] = matchTypes
-//			matchResult.TechFound = append(matchResult.TechFound, tech)
-//		}
-//	}
-//
-//	if strings.ToLower(tech) == "scripttag" {
-//		tech = "custom-" + tech
-//		if match := sliceAndSliceMatch(&m.HtmlExtractions.ScriptTags, matches); match {
-//			matchTypes = append(matchTypes, "scriptTag")
-//			matchResult.TechnologyMatches[tech] = matchTypes
-//			matchResult.TechFound = append(matchResult.TechFound, tech)
-//		}
-//	}
-//}
