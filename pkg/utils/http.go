@@ -1,15 +1,17 @@
-package main
+package utils
 
 import (
 	"bytes"
 	"crypto/tls"
-	"github.com/PuerkitoBio/goquery"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"time"
 
 	"github.com/EDDYCJY/fake-useragent"
+	"github.com/PuerkitoBio/goquery"
+
+	"github.com/ameenmaali/whoareyou/pkg/config"
 )
 
 type Response struct {
@@ -20,24 +22,24 @@ type Response struct {
 	GoQueryDoc    *goquery.Document
 }
 
-func createClient() {
+func CreateClient(timeout int) *http.Client {
 	transport := &http.Transport{
 		TLSClientConfig:   &tls.Config{InsecureSkipVerify: true},
 		DisableKeepAlives: true,
 		DialContext: (&net.Dialer{
-			Timeout:   time.Duration(opts.Timeout) * time.Second,
+			Timeout:   time.Duration(timeout) * time.Second,
 			KeepAlive: time.Second,
 		}).DialContext,
 	}
 
 	httpClient := &http.Client{
 		Transport: transport,
-		Timeout:   time.Duration(opts.Timeout+3) * time.Second,
+		Timeout:   time.Duration(timeout+3) * time.Second,
 	}
-	config.httpClient = httpClient
+	return httpClient
 }
 
-func sendRequest(u string) (Response, error) {
+func SendRequest(u string, config *config.Config) (Response, error) {
 	response := Response{}
 
 	request, err := http.NewRequest("GET", u, nil)
@@ -55,7 +57,7 @@ func sendRequest(u string) (Response, error) {
 	// Add cookies passed in as arguments
 	request.Header.Add("Cookie", config.Cookies)
 
-	resp, err := config.httpClient.Do(request)
+	resp, err := config.HttpClient.Do(request)
 
 	if err != nil {
 		return response, err

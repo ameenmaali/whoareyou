@@ -1,15 +1,16 @@
-package main
+package utils
 
 import (
 	"bufio"
 	"errors"
+	"github.com/ameenmaali/whoareyou/pkg/config"
 	"net/url"
 	"os"
 	"regexp"
 	"strings"
 )
 
-func getUrlsFromFile() ([]string, error) {
+func GetUrlsFromFile(conf *config.Config) ([]string, error) {
 	deduplicatedUrls := make(map[string]bool)
 	var urls []string
 
@@ -20,8 +21,8 @@ func getUrlsFromFile() ([]string, error) {
 		// Only include properly formatted URLs
 		u, err := url.ParseRequestURI(providedUrl)
 		if err != nil {
-			if opts.Debug {
-				printRed(os.Stderr, "url provided [%v] is not a properly formatted URL\n", providedUrl)
+			if conf.DebugMode {
+				conf.Utils.PrintRed(os.Stderr, "url provided [%v] is not a properly formatted URL\n", providedUrl)
 			}
 			continue
 		}

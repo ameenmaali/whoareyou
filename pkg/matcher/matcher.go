@@ -1,4 +1,4 @@
-package main
+package matcher
 
 import (
 	"regexp"
@@ -13,6 +13,19 @@ type Matcher struct {
 	Script          []*regexp.Regexp
 	JavaScript      map[string]*regexp.Regexp
 	Meta            map[string]*regexp.Regexp
+	HtmlExtractions HtmlExtractions
+}
+
+type AppMatch struct {
+	Name    string
+	Website string
+	Matches *Matcher
+}
+
+type MatchResult struct {
+	Url               string
+	TechnologyMatches map[string][]string
+	TechFound         []string
 }
 
 func (m *Matcher) contentMatch(body *string) bool {
@@ -37,6 +50,33 @@ func (m *Matcher) scriptMatch(script *[]string) bool {
 
 func (m *Matcher) metaMatch(meta *map[string]string) bool {
 	return mapAndMapMatch(meta, m.Meta)
+}
+
+func (m *Matcher) Evaluate(tech string, matchResult *MatchResult) {
+	var matchTypes []string
+	if contentMatch := m.contentMatch(m.HtmlExtractions.RawHtmlBody); contentMatch {
+		matchTypes = append(matchTypes, "htmlContent")
+		matchResult.TechnologyMatches[tech] = matchTypes
+		matchResult.TechFound = append(matchResult.TechFound, tech)
+	}
+
+	if scriptMatch := m.scriptMatch(&m.HtmlExtractions.ScriptTags); scriptMatch {
+		matchTypes = append(matchTypes, "scriptTag")
+		matchResult.TechnologyMatches[tech] = matchTypes
+		matchResult.TechFound = append(matchResult.TechFound, tech)
+	}
+
+	if metaMatch := m.metaMatch(&m.HtmlExtractions.MetaTags); metaMatch {
+		matchTypes = append(matchTypes, "metaTag")
+		matchResult.TechnologyMatches[tech] = matchTypes
+		matchResult.TechFound = append(matchResult.TechFound, tech)
+	}
+
+	if jsMatch := m.javascriptMatch(&m.HtmlExtractions.InlineJavaScript); jsMatch {
+		matchTypes = append(matchTypes, "javascriptContent")
+		matchResult.TechnologyMatches[tech] = matchTypes
+		matchResult.TechFound = append(matchResult.TechFound, tech)
+	}
 }
 
 func strAndMapMatch(matchStrPtr *string, values map[string]*regexp.Regexp) bool {
@@ -110,3 +150,26 @@ func mapAndMapMatch(matchMapPtr *map[string]string, values map[string]*regexp.Re
 	}
 	return false
 }
+
+//func EvaluateCustom(tech string, matchRegex *regexp.Regexp, matchResult *MatchResult) {
+//	var matchTypes []string
+//	matches := []*regexp.Regexp{matchRegex}
+//
+//	if strings.ToLower(tech) == "htmlcontent" {
+//		tech = "custom-" + tech
+//		if match := strAndSliceMatch(m.HtmlExtractions.RawHtmlBody, matches); match {
+//			matchTypes = append(matchTypes, "htmlContent")
+//			matchResult.TechnologyMatches[tech] = matchTypes
+//			matchResult.TechFound = append(matchResult.TechFound, tech)
+//		}
+//	}
+//
+//	if strings.ToLower(tech) == "scripttag" {
+//		tech = "custom-" + tech
+//		if match := sliceAndSliceMatch(&m.HtmlExtractions.ScriptTags, matches); match {
+//			matchTypes = append(matchTypes, "scriptTag")
+//			matchResult.TechnologyMatches[tech] = matchTypes
+//			matchResult.TechFound = append(matchResult.TechFound, tech)
+//		}
+//	}
+//}

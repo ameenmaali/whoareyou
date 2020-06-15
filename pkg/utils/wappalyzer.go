@@ -1,8 +1,10 @@
-package main
+package utils
 
 import (
 	"encoding/json"
 	"errors"
+	"github.com/ameenmaali/whoareyou/pkg/config"
+	"github.com/ameenmaali/whoareyou/pkg/matcher"
 	"os"
 	"regexp"
 	"strings"
@@ -10,15 +12,9 @@ import (
 
 const WAPPALYZER_SOURCE_URL = "https://raw.githubusercontent.com/AliasIO/wappalyzer/master/src/apps.json"
 
-type WappalyzerApp struct {
-	Name    string
-	Website string
-	Matches *Matcher
-}
-
-func fetchWappalyzerData() (map[string]WappalyzerApp, error) {
-	wappalyzerData := map[string]WappalyzerApp{}
-	resp, err := sendRequest(WAPPALYZER_SOURCE_URL)
+func FetchWappalyzerData(conf *config.Config) (map[string]matcher.AppMatch, error) {
+	wappalyzerData := map[string]matcher.AppMatch{}
+	resp, err := SendRequest(WAPPALYZER_SOURCE_URL, conf)
 	if err != nil {
 		return wappalyzerData, err
 	}
@@ -29,7 +25,7 @@ func fetchWappalyzerData() (map[string]WappalyzerApp, error) {
 
 	for _, value := range responseBody {
 		for app, apps := range value {
-			match := Matcher{
+			match := matcher.Matcher{
 				Cookies:         nil,
 				Icon:            "",
 				Headers:         nil,
@@ -39,7 +35,7 @@ func fetchWappalyzerData() (map[string]WappalyzerApp, error) {
 				Meta:            nil,
 			}
 
-			wapp := WappalyzerApp{
+			wapp := matcher.AppMatch{
 				Name:    app,
 				Website: "",
 				Matches: &match,
@@ -55,48 +51,48 @@ func fetchWappalyzerData() (map[string]WappalyzerApp, error) {
 
 			if apps["html"] != nil {
 				if err := stringOrSliceHandler(apps["html"], &match.ResponseContent); err != nil {
-					if opts.Debug {
-						printRed(os.Stderr, "error parsing wappalyzer html data", err)
+					if conf.DebugMode {
+						conf.Utils.PrintRed(os.Stderr, "error parsing wappalyzer html data", err)
 					}
 				}
 			}
 
 			if apps["headers"] != nil {
 				if err := mapHandler(apps["headers"], &match.Headers); err != nil {
-					if opts.Debug {
-						printRed(os.Stderr, "error parsing wappalyzer header data", err)
+					if conf.DebugMode {
+						conf.Utils.PrintRed(os.Stderr, "error parsing wappalyzer header data", err)
 					}
 				}
 			}
 
 			if apps["cookies"] != nil {
 				if err := mapHandler(apps["cookies"], &match.Cookies); err != nil {
-					if opts.Debug {
-						printRed(os.Stderr, "error parsing wappalyzer cookie data", err)
+					if conf.DebugMode {
+						conf.Utils.PrintRed(os.Stderr, "error parsing wappalyzer cookie data", err)
 					}
 				}
 			}
 
 			if apps["script"] != nil {
 				if err := stringOrSliceHandler(apps["script"], &match.Script); err != nil {
-					if opts.Debug {
-						printRed(os.Stderr, "error parsing wappalyzer script data", err)
+					if conf.DebugMode {
+						conf.Utils.PrintRed(os.Stderr, "error parsing wappalyzer script data", err)
 					}
 				}
 			}
 
 			if apps["js"] != nil {
 				if err := mapHandler(apps["js"], &match.JavaScript); err != nil {
-					if opts.Debug {
-						printRed(os.Stderr, "error parsing wappalyzer js data", err)
+					if conf.DebugMode {
+						conf.Utils.PrintRed(os.Stderr, "error parsing wappalyzer js data", err)
 					}
 				}
 			}
 
 			if apps["meta"] != nil {
 				if err := mapHandler(apps["meta"], &match.Meta); err != nil {
-					if opts.Debug {
-						printRed(os.Stderr, "error parsing wappalyzer meta data", err)
+					if conf.DebugMode {
+						conf.Utils.PrintRed(os.Stderr, "error parsing wappalyzer meta data", err)
 					}
 				}
 			}

@@ -1,4 +1,4 @@
-package main
+package matcher
 
 import (
 	"github.com/PuerkitoBio/goquery"
@@ -8,6 +8,7 @@ type HtmlExtractions struct {
 	ScriptTags       []string
 	InlineJavaScript []string
 	MetaTags         map[string]string
+	RawHtmlBody      *string
 }
 
 func (he *HtmlExtractions) getScriptTags(doc *goquery.Document) {
@@ -35,4 +36,10 @@ func (he *HtmlExtractions) getInlineJavaScript(doc *goquery.Document) {
 		inlineJS = append(inlineJS, item.Text())
 	})
 	he.InlineJavaScript = inlineJS
+}
+
+func (he *HtmlExtractions) Parse(doc *goquery.Document) {
+	he.getScriptTags(doc)
+	he.getMetaTags(doc)
+	he.getInlineJavaScript(doc)
 }
