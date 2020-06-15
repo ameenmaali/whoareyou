@@ -37,7 +37,7 @@ type Config struct {
 	CustomMatch  map[string]matcher.AppMatch
 	TechInScope  map[string]matcher.AppMatch
 	Utils        Utilities
-	DebugMode bool
+	DebugMode    bool
 }
 
 type PrintColor func(w io.Writer, format string, a ...interface{})
@@ -94,11 +94,15 @@ func (c *Config) VerifyFlags(options *CliOptions) error {
 	flag.StringVar(&options.Headers, "H", "", "Headers to add in all requests. Multiple should be separated by semi-colon")
 	flag.StringVar(&options.Headers, "headers", "", "Headers to add in all requests. Multiple should be separated by semi-colon")
 
-	flag.StringVar(&options.RawTechInScope, "tech", "", "The technology to check against (default is all, comma-separated list). Get names from app keys here: https://github.com/AliasIO/wappalyzer/blob/master/src/apps.json")
-	flag.StringVar(&options.RawTechInScope, "technology-lookups", "", "The technology to check against (default is all, comma-separated list). Get names from app keys here: https://github.com/AliasIO/wappalyzer/blob/master/src/apps.json")
+	flag.StringVar(&options.RawTechInScope, "tech", "", "The technology to check against (default is all, comma-separated list).\n" +
+		" Get names from app keys here: https://github.com/AliasIO/wappalyzer/blob/master/src/apps.json")
+	flag.StringVar(&options.RawTechInScope, "technology-lookups", "", "The technology to check against (default is all, comma-separated list).\n" +
+		" Get names from app keys here: https://github.com/AliasIO/wappalyzer/blob/master/src/apps.json")
 
-	flag.Var(&options.CustomMatch, "m", "Key value pair (JSON formatted) of a match source type and regex value (or string) to search for (i.e. '{\"htmlContent\": \"^http(s)?:\\/\\/.+\"}'. Available match source types are: htmlContent, scriptTag")
-	flag.Var(&options.CustomMatch, "match", "Key value pair (JSON formatted) of a match source type and regex value (or string) to search for (i.e. '{\"htmlContent\": \"^http(s)?:\\/\\/.+\"}'. Available match source types are: htmlContent, scriptTag")
+	flag.Var(&options.CustomMatch, "m", "Key value pair (JSON formatted, see README for usage info) of a match source type and regex value (or string) to search for\n" +
+		" (i.e. '{\"name\": {\"responseBody\": \"^http(s)?:\\/\\/.+\"}}'. Available match source types are: responseBody, scriptSrc. Flag can be set more than once.")
+	flag.Var(&options.CustomMatch, "match", "Key value pair (JSON formatted, see README for usage info) of a match source type and regex value (or string) to search for\n" +
+		" (i.e. '{\"name\": {\"responseBody\": \"^http(s)?:\\/\\/.+\"}}'. Available match source types are: responseBody, scriptSrc. Flag can be set more than once.")
 
 	flag.BoolVar(&options.DisableWappalyzer, "dw", false, "Disable Wappalyzer scans (useful for only including custom matches)")
 	flag.BoolVar(&options.DisableWappalyzer, "disable-wappalyzer", false, "Disable Wappalyzer scans (useful for only including custom matches)")

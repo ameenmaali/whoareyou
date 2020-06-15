@@ -3,11 +3,12 @@ package utils
 import (
 	"encoding/json"
 	"errors"
-	"github.com/ameenmaali/whoareyou/pkg/config"
-	"github.com/ameenmaali/whoareyou/pkg/matcher"
 	"os"
 	"regexp"
 	"strings"
+
+	"github.com/ameenmaali/whoareyou/pkg/config"
+	"github.com/ameenmaali/whoareyou/pkg/matcher"
 )
 
 const WAPPALYZER_SOURCE_URL = "https://raw.githubusercontent.com/AliasIO/wappalyzer/master/src/apps.json"
