@@ -82,7 +82,7 @@ make sure to include the `-dw|disable-wappalyzer` flag
 Pass in a list of URLs with no custom matches
 
 ```
-cat urls.txt | whoareyou
+whoareyou < /path/to/urls.txt 
 ```
 
 Pass in a site to [waybackurls](https://github.com/tomnomnom/waybackurls), run it through [urldedupe](https://github.com/ameenmaali/urldedupe) to deduplicate, and run whoareyou and store to results.txt
@@ -94,17 +94,17 @@ echo "https://google.com" | waybackurls | urldedupe | whoareyou > results.txt
 Use a custom match to look for the existence of a URL in a response body or script tag
 
 ```
-cat urls.txt | whoareyou -m '{"findUrls":{"scriptSrc":"^http(s)?:\/\/mymatch.+", "responseBody":"^http(s)?:\/\/mymatch.+"}}'
+whoareyou -m '{"findUrls":{"scriptSrc":"^http(s)?:\/\/mymatch.+", "responseBody":"^http(s)?:\/\/mymatch.+"}}' < urls.txt
 ```
 
 Use a custom match, and don't use Wappalyzer dataset to look for a specific list of strings in a response body
 
 ```
-cat urls.txt | whoareyou -m '{"findstring":{"responseBody":["str1","str2","str3"]}}' -dw
+whoareyou -m '{"findstring":{"responseBody":["str1","str2","str3"]}}' -dw < /path/to/urls.txt
 ```
 
 Search for specify technology key from [Wappalyzer](https://github.com/AliasIO/wappalyzer/blob/master/src/apps.json)
 
 ```
-cat urls.txt | whoareyou -tech "wordpress,intercom,youtube"
+whoareyou -tech "wordpress,intercom,youtube" < /path/to/urls.txt
 ```
